@@ -1,4 +1,6 @@
-﻿namespace CustomTimer
+﻿using CustomTimer.Factories;
+
+namespace CustomTimer
 {
     /// <summary>
     /// A custom class for simulating a countdown clock, which implements the ability to send a messages and additional
@@ -19,7 +21,49 @@
     /// </summary>
     public class Timer
     {
-        // TODO: Add implementation here.
-        // Don't use .NET timers classes implementation.
+        private readonly string name;
+        private int ticks;
+
+        public Timer(string name, int ticks)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException("Can't be null or empty.", nameof(name));
+            }
+
+            if (ticks <= 0)
+            {
+                throw new ArgumentException("The number must be greater than 0.", nameof(ticks));
+            }
+
+            this.name = name;
+            this.ticks = ticks;
+        }
+
+        public event Action<string, int> Started;
+
+        public event Action<string, int> Tick;
+
+        public event Action<string> Stopped;
+
+        public void Start()
+        {
+            this.OnStarted(this.name, this.ticks);
+
+            while (this.ticks > 1)
+            {
+                this.ticks--;
+                this.OnTick(this.name, this.ticks);
+                Thread.Sleep(100);
+            }
+
+            this.OnStopped(this.name);
+        }
+
+        protected virtual void OnStarted(string name, int ticks) => this.Started?.Invoke(name, ticks);
+
+        protected virtual void OnTick(string name, int ticks) => this.Tick?.Invoke(name, ticks);
+
+        protected virtual void OnStopped(string name) => this.Stopped?.Invoke(name);
     }
 }
